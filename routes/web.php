@@ -1,26 +1,53 @@
 <?php
 
+use App\Http\Controllers\JobController;
+use App\Http\Controllers\SessionController;
+use App\Http\Controllers\UserController;
+use App\Jobs\TranslateJob;
 use App\Models\Job;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
+//test email
+Route::get('test', function () {
+    $job = Job::first();
+
+    TranslateJob::dispatch($job);
+
+    return 'done';
 });
 
-Route::get('/jobs', function () {
-    return view('jobs',[
-        'jobs'=> Job::all()
-    ]);
+//home page
+Route::view('/', 'welcome');
+//jobs board
+Route::controller(JobController::class)->group(function () {
+    Route::get('/jobs','index');
+//creating a new job
+    Route::get('/jobs/create','create');
+//displaying a new job
+    Route::get('/jobs/{job}','show');
+//store
+    Route::post('/jobs','store')
+        ->middleware('auth');
+//edit
+    Route::get('/jobs/{job}/edit','edit')
+        ->middleware('auth')
+        ->can('can:edit,job');
+//update
+    Route::patch('/jobs/{job}','update');
+//delete
+    Route::delete('/jobs/{job}', 'destroy');
 });
-Route::get('/jobs/{id}', function ($id) {
 
-       $job= Job::find($id);
-        return view('job',['job'=>$job]);
+//static views
+Route::view('/about','about');
+Route::view('/contact','contact');
 
-});
-Route::get('/about', function () {
-    return view('about');
-});
-Route::get('/contact', function () {
-    return view('contact');
-});
+//user
+
+//registration
+Route::get('/register',[UserController::class,'create']);
+Route::post('/register',[UserController::class,'store']);
+
+Route::get('/login',[SessionController::class,'create']);
+Route::post('/login',[SessionController::class,'store']);
+Route::post('/logout',[SessionController::class,'destroy']);
